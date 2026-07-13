@@ -4,6 +4,7 @@
   const ORIGINAL_ORIGIN = 'https://www.accio.com';
   const ORIGINAL_WORK = `${ORIGINAL_ORIGIN}/work`;
   const ACCIO_LOGIN_URL = 'https://www.accio-ai.com/login?sId=7YLXRghbT36k7rjO0EZJaw%3D%3D&ic=IC435013278092&tenant=accio_work&src=p_supplier_cn&channel=accio_sales_invite';
+  const AUTH_ROUTE_PATTERN = /(?:^|\/)(?:login|register|signup|sign-in|sign-up)(?:\/|$)/i;
   let remoteView = null;
 
   const addBridgeStyles = () => {
@@ -114,9 +115,28 @@
     document.head.appendChild(style);
   };
 
+  const isAuthLabel = (value) => /登录|注册/.test((value || '').replace(/\s+/g, ''));
+
+  const isAuthRoute = (rawHref) => {
+    if (!rawHref) {
+      return false;
+    }
+
+    try {
+      const parsed = new URL(rawHref, window.location.href);
+      return AUTH_ROUTE_PATTERN.test(parsed.pathname);
+    } catch {
+      return false;
+    }
+  };
+
   const toOriginalUrl = (rawHref) => {
     if (!rawHref || rawHref.startsWith('javascript:') || rawHref.startsWith('mailto:')) {
       return null;
+    }
+
+    if (isAuthRoute(rawHref)) {
+      return ACCIO_LOGIN_URL;
     }
 
     if (rawHref.startsWith('#')) {
@@ -129,8 +149,6 @@
 
     return rawHref;
   };
-
-  const isAuthLabel = (value) => /登录|注册/.test((value || '').replace(/\s+/g, ''));
 
   const buttonTarget = (button) => {
     const label = (button.getAttribute('aria-label') || '').toLowerCase();
@@ -176,11 +194,13 @@
       return;
     }
 
+    const targetUrl = isAuthRoute(url) ? ACCIO_LOGIN_URL : url;
+
     closeRemoteView(true);
     addBridgeStyles();
 
     const shell = document.createElement('section');
-    const isLoginView = url.startsWith('https://www.accio-ai.com/login');
+    const isLoginView = targetUrl === ACCIO_LOGIN_URL;
     shell.className = `accio-remote-view${isLoginView ? ' accio-remote-view--login' : ''}`;
     shell.setAttribute('aria-label', '原站功能视图');
 
@@ -206,7 +226,7 @@
 
     const open = document.createElement('a');
     open.className = 'accio-remote-open';
-    open.href = url;
+    open.href = targetUrl;
     open.target = '_blank';
     open.rel = 'noopener noreferrer';
     open.textContent = '在原站打开';
@@ -218,7 +238,7 @@
     const frame = document.createElement('iframe');
     frame.className = 'accio-remote-frame';
     frame.title = title;
-    frame.src = url;
+    frame.src = targetUrl;
     frame.setAttribute('allow', 'clipboard-read; clipboard-write');
     frame.addEventListener('load', () => loading.remove(), { once: true });
 
@@ -231,18 +251,26 @@
     document.body.appendChild(shell);
     remoteView = shell;
 
-    window.history.pushState({ remoteUrl: url }, '', `#remote=${encodeURIComponent(url)}`);
+    window.history.pushState({ remoteUrl: targetUrl }, '', `#remote=${encodeURIComponent(targetUrl)}`);
   };
 
-  const handleButton = (button) => {
+  const handleButton = (event, button) => {
     const label = (button.getAttribute('aria-label') || '').toLowerCase();
+    const buttonText = (button.textContent || '').replace(/\s+/g, ' ').trim();
+
+    if (isAuthLabel(`${label} ${buttonText}`)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openRemoteView(ACCIO_LOGIN_URL, buttonText || '登录');
+      return;
+    }
 
     if (label === '返回顶部') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    openRemoteView(buttonTarget(button), (button.textContent || label || 'Accio Work').trim());
+    openRemoteView(buttonTarget(button), (buttonText || label || 'Accio Work').trim());
   };
 
   const handleAnchor = (event, anchor) => {
@@ -253,12 +281,20 @@
     const anchorLabel = `${anchor.getAttribute('aria-label') || ''} ${anchor.textContent || ''}`;
     if (isAuthLabel(anchorLabel)) {
       event.preventDefault();
+      event.stopImmediatePropagation();
       openRemoteView(ACCIO_LOGIN_URL, anchor.textContent.trim() || '登录');
       return;
     }
 
     const href = toOriginalUrl(anchor.getAttribute('href'));
     if (!href || !/^https?:\/\//i.test(href)) {
+      return;
+    }
+
+    if (href === ACCIO_LOGIN_URL) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openRemoteView(ACCIO_LOGIN_URL, anchor.textContent.trim() || '登录');
       return;
     }
 
@@ -282,9 +318,9 @@
 
       const button = event.target.closest?.('button');
       if (button) {
-        handleButton(button);
+        handleButton(event, button);
       }
-    });
+    }, true);
 
     document.querySelectorAll('form').forEach((form) => {
       form.addEventListener('submit', (event) => {

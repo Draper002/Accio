@@ -4,7 +4,7 @@
   const ORIGINAL_ORIGIN = 'https://www.accio.com';
   const ORIGINAL_WORK = `${ORIGINAL_ORIGIN}/work`;
   const ACCIO_LOGIN_URL = 'https://www.accio-ai.com/login?sId=7YLXRghbT36k7rjO0EZJaw%3D%3D&ic=IC435013278092&tenant=accio_work&src=p_supplier_cn&channel=accio_sales_invite';
-  const AUTH_ROUTE_PATTERN = /(?:^|\/)(?:login|register|signup|sign-in|sign-up)(?:\/|$)/i;
+  const AUTH_ROUTE_PATTERN = /(?:^|\/)(?:login|register|signup|sign-in|sign-up|pricing|work\/app)(?:\/|$)/i;
   let remoteView = null;
 
   const addBridgeStyles = () => {
@@ -155,7 +155,7 @@
     const text = `${button.textContent || ''} ${button.getAttribute('value') || ''}`.replace(/\s+/g, ' ').trim();
 
     if (text.includes('定价')) {
-      return `${ORIGINAL_ORIGIN}/pricing?pricingScene=manager&region=accio_work&language=zh`;
+      return ACCIO_LOGIN_URL;
     }
     if (isAuthLabel(text)) {
       return ACCIO_LOGIN_URL;

@@ -152,7 +152,7 @@
 
   const buttonTarget = (button) => {
     const label = (button.getAttribute('aria-label') || '').toLowerCase();
-    const text = (button.textContent || '').replace(/\s+/g, ' ').trim();
+    const text = `${button.textContent || ''} ${button.getAttribute('value') || ''}`.replace(/\s+/g, ' ').trim();
 
     if (text.includes('定价')) {
       return `${ORIGINAL_ORIGIN}/pricing?pricingScene=manager&region=accio_work&language=zh`;
@@ -255,8 +255,8 @@
   };
 
   const handleButton = (event, button) => {
-    const label = (button.getAttribute('aria-label') || '').toLowerCase();
-    const buttonText = (button.textContent || '').replace(/\s+/g, ' ').trim();
+    const label = `${button.getAttribute('aria-label') || ''} ${button.getAttribute('title') || ''}`.toLowerCase();
+    const buttonText = `${button.textContent || ''} ${button.getAttribute('value') || ''}`.replace(/\s+/g, ' ').trim();
 
     if (isAuthLabel(`${label} ${buttonText}`)) {
       event.preventDefault();
@@ -316,7 +316,7 @@
         return;
       }
 
-      const button = event.target.closest?.('button');
+      const button = event.target.closest?.('button, [role="button"], input[type="button"], input[type="submit"]');
       if (button) {
         handleButton(event, button);
       }

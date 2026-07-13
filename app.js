@@ -19,97 +19,26 @@
         position: fixed;
         inset: 0;
         z-index: 2147483000;
-        display: grid;
-        grid-template-rows: 56px minmax(0, 1fr);
+        display: flex;
+        flex-direction: column;
         background: #ffffff;
         color: #1d1d1f;
       }
-      .accio-remote-view--login {
-        grid-template-rows: 56px 54px minmax(0, 1fr);
-      }
-      .accio-remote-toolbar {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        min-width: 0;
-        padding: 0 18px;
-        border-bottom: 1px solid #e5e7eb;
-        background: rgba(255, 255, 255, 0.96);
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-      }
-      .accio-remote-back,
-      .accio-remote-open {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        flex: none;
-        min-height: 34px;
-        border-radius: 999px;
-        padding: 0 14px;
-        font-size: 13px;
-        font-weight: 600;
-        text-decoration: none;
-        cursor: pointer;
-      }
-      .accio-remote-back {
-        border: 1px solid #d1d5db;
-        background: #ffffff;
-        color: #374151;
-      }
-      .accio-remote-back:hover { background: #f9fafb; }
-      .accio-remote-open {
-        border: 1px solid #d1fae5;
-        background: #ecfdf5;
-        color: #047857;
-      }
-      .accio-remote-open:hover { background: #d1fae5; }
-      .accio-remote-title {
-        min-width: 0;
-        overflow: hidden;
-        color: #4b5563;
-        font-size: 13px;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-      .accio-login-banner {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 0;
-        padding: 0 18px;
-        border-bottom: 1px solid #d1fae5;
-        background: #ecfdf5;
-        color: #047857;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-        font-size: 15px;
-        font-weight: 700;
-        text-align: center;
-      }
-      .accio-remote-spacer { flex: 1; }
       .accio-remote-frame {
         width: 100%;
-        height: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
         border: 0;
         background: #ffffff;
       }
       .accio-remote-loading {
         position: absolute;
-        inset: 56px 0 0;
+        inset: 0;
         display: grid;
         place-items: center;
         pointer-events: none;
         color: #6b7280;
         font: 13px system-ui, -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
-      }
-      .accio-remote-view--login .accio-remote-loading {
-        inset: 110px 0 0;
-      }
-      @media (max-width: 640px) {
-        .accio-remote-toolbar { gap: 8px; padding: 0 10px; }
-        .accio-remote-back,
-        .accio-remote-open { padding: 0 10px; font-size: 12px; }
-        .accio-remote-title { display: none; }
       }
     `;
     document.head.appendChild(style);
@@ -200,36 +129,8 @@
     addBridgeStyles();
 
     const shell = document.createElement('section');
-    const isLoginView = targetUrl === ACCIO_LOGIN_URL;
-    shell.className = `accio-remote-view${isLoginView ? ' accio-remote-view--login' : ''}`;
+    shell.className = 'accio-remote-view';
     shell.setAttribute('aria-label', '原站功能视图');
-
-    const toolbar = document.createElement('header');
-    toolbar.className = 'accio-remote-toolbar';
-
-    const back = document.createElement('button');
-    back.type = 'button';
-    back.className = 'accio-remote-back';
-    back.textContent = '返回首页';
-    back.addEventListener('click', () => closeRemoteView(false));
-
-    const heading = document.createElement('div');
-    heading.className = 'accio-remote-title';
-    heading.textContent = title;
-
-    const spacer = document.createElement('div');
-    spacer.className = 'accio-remote-spacer';
-
-    const loginBanner = document.createElement('div');
-    loginBanner.className = 'accio-login-banner';
-    loginBanner.textContent = '免费组建你的 Agent 团队，每日赠送免费额度';
-
-    const open = document.createElement('a');
-    open.className = 'accio-remote-open';
-    open.href = targetUrl;
-    open.target = '_blank';
-    open.rel = 'noopener noreferrer';
-    open.textContent = '在原站打开';
 
     const loading = document.createElement('div');
     loading.className = 'accio-remote-loading';
@@ -242,11 +143,6 @@
     frame.setAttribute('allow', 'clipboard-read; clipboard-write');
     frame.addEventListener('load', () => loading.remove(), { once: true });
 
-    toolbar.append(back, heading, spacer, open);
-    shell.append(toolbar);
-    if (isLoginView) {
-      shell.append(loginBanner);
-    }
     shell.append(loading, frame);
     document.body.appendChild(shell);
     remoteView = shell;

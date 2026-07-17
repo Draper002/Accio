@@ -599,6 +599,18 @@
     const anchorLabel = `${anchor.getAttribute('aria-label') || ''} ${anchor.textContent || ''}`;
     const rawHref = anchor.getAttribute('href') || '';
     const internationalDownloadUrl = anchor.dataset.accioInternationalDownload || rawHref;
+
+    if (isMobileVisitor() && (
+      isDownloadLabel(anchorLabel)
+      || isAuthLabel(anchorLabel)
+      || isAuthRoute(rawHref)
+    )) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      redirectToLogin();
+      return;
+    }
+
     if (anchor.dataset.accioRequiresLogin === 'true' || isDownloadLabel(anchorLabel) || isDownloadRoute(rawHref)) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -648,10 +660,17 @@
       showDownloadResumePrompt(pendingDownload);
     }
 
-    // Mobile is intentionally a single-purpose acquisition page: any tap
-    // continues through the fixed invite login before a download can proceed.
+    // On phones, explicit action controls continue through the fixed invite
+    // login. Reading, scrolling, and tapping ordinary page content does not.
     document.addEventListener('click', (event) => {
       if (!isMobileVisitor()) {
+        return;
+      }
+
+      const actionControl = event.target.closest?.(
+        'button, [role="button"], input[type="button"], input[type="submit"], input[type="reset"]'
+      );
+      if (!actionControl) {
         return;
       }
 

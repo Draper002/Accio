@@ -46,6 +46,57 @@
 
   const isAuthLabel = (value) => /登录|注册/.test((value || '').replace(/\s+/g, ''));
 
+  const getDevicePlatform = () => {
+    const userAgent = navigator.userAgent || '';
+    const platform = navigator.userAgentData?.platform || navigator.platform || '';
+    const signature = `${platform} ${userAgent}`;
+
+    if (/Macintosh|Mac OS X|MacIntel|MacPPC|Mac68K/i.test(signature)) {
+      return 'macos';
+    }
+    if (/Windows/i.test(signature)) {
+      return 'windows';
+    }
+    if (/Android/i.test(signature)) {
+      return 'android';
+    }
+    if (/iPhone|iPad|iPod/i.test(signature)) {
+      return 'ios';
+    }
+    if (/Linux/i.test(signature)) {
+      return 'linux';
+    }
+
+    return 'other';
+  };
+
+  const updatePlatformDownloadLabels = () => {
+    const platform = getDevicePlatform();
+    const copy = platform === 'macos'
+      ? { label: 'Download for macOS', detail: 'For macOS 11 or later' }
+      : platform === 'windows'
+        ? { label: '下载 Windows 版', detail: '适用于 Windows 10 或更高版本 · 仅支持 64 位' }
+        : { label: '下载桌面版', detail: '支持 macOS 和 Windows' };
+
+    const links = [
+      ...document.querySelectorAll('a[href*="work-download.accio.com"]'),
+      ...document.querySelectorAll('#pricing a[href*="langRedirect=1#"]')
+    ];
+
+    [...new Set(links)].forEach((link) => {
+      const label = link.querySelector('span.font-semibold') || link;
+      label.textContent = copy.label;
+      link.setAttribute('aria-label', copy.label);
+
+      const detail = link.closest('#pricing')?.querySelector('span.text-xs');
+      if (detail) {
+        detail.textContent = copy.detail;
+      }
+    });
+
+    document.documentElement.dataset.accioPlatform = platform;
+  };
+
   const isAuthRoute = (rawHref) => {
     if (!rawHref) {
       return false;
@@ -203,6 +254,7 @@
   };
 
   const boot = () => {
+    updatePlatformDownloadLabels();
     addBridgeStyles();
 
     document.addEventListener('click', (event) => {
